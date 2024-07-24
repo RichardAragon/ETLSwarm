@@ -54,81 +54,6 @@ data = {
     "EMAIL": ["JOHN.DOE@EXAMPLE.COM", "MARY.SMITH@EXAMPLE.COM", "JIM.BROWN@EXAMPLE.COM", "NANCY@DOMAIN.COM", "ALAN.SMITHEE@DOMAIN", "Prediction = \"LUCY.BLACK@DOMAIN.COM\"", "EVE.WHITE@DOMAIN.COM", "MICHAEL.TAYLOR@EXAMPLE.COM", "sarah.green@example.com", ""]
 }
 
-df = pd.DataFrame(data)
-db_path = '/content/example.db'
-engine = create_engine(f'sqlite:///{db_path}')
-df.to_sql('customers', engine, if_exists='replace', index=False)
-Define Functions:
-
-python
-Copy code
-def map_data():
-    engine = create_engine(f'sqlite:///{db_path}')
-    query = "SELECT * FROM customers"
-    df = pd.read_sql(query, engine)
-
-    issues = []
-
-    for index, row in df.iterrows():
-        if pd.isnull(row['ID']):
-            issues.append(f"Row {index+1}: Missing ID")
-        if "Prediction =" in str(row['NAME']):
-            issues.append(f"Row {index+1}: Predicted Name")
-        if "Prediction =" in str(row['EMAIL']):
-            issues.append(f"Row {index+1}: Predicted Email")
-        if row['AMOUNT'] is None or row['AMOUNT'] < 0:
-            issues.append(f"Row {index+1}: Invalid Amount")
-        if not isinstance(row['DATE'], str) or not any(char in row['DATE'] for char in ['-', '/']):
-            issues.append(f"Row {index+1}: Invalid Date Format")
-
-    return df, issues
-
-def generate_correction_code(issues, client):
-    prompt = f"The following data issues were found:\n{', '.join(issues)}\nGenerate only the Python code to correct these issues in a pandas DataFrame named `df`."
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ]
-    )
-    generated_code = response.choices[0].message.content.strip()
-
-    start = generated_code.find("import pandas as pd")
-    end = generated_code.rfind("```")
-    if start != -1 and end != -1:
-        generated_code = generated_code[start:end].strip()
-
-    return generated_code
-
-def apply_corrections(df, correction_code):
-    local_vars = {'df': df}
-    exec(correction_code, globals(), local_vars)
-    return local_vars['df']
-
-def update_database(df):
-    df.columns = df.columns.str.lower()
-    df = df.loc[:, ~df.columns.duplicated()]
-    engine = create_engine(f'sqlite:///{db_path}')
-    df.to_sql('customers', engine, if_exists='replace', index=False)
-Run ETL Swarm:
-
-python
-Copy code
-client = OpenAI(api_key='YOUR_API_KEY')
-
-df, issues = map_data()
-
-if issues:
-    correction_code = generate_correction_code(issues, client)
-    print("Correction Code:\n", correction_code)
-
-    corrected_df = apply_corrections(df, correction_code)
-
-    update_database(corrected_df)
-    print("Database updated successfully with corrected data.")
-else:
-    print("No issues found in the data.")
 Code Explanation
 Install Required Libraries: Install the necessary Python libraries.
 Initialize OpenAI API: Set up the OpenAI client with your API key.
@@ -139,5 +64,6 @@ generate_correction_code(): Uses the LLM to generate Python code for correcting 
 apply_corrections(): Applies the generated correction code to the DataFrame.
 update_database(): Updates the database with the corrected data, ensuring no duplicate columns.
 Run ETL Swarm: Executes the ETL process by identifying issues, generating corrections, applying those corrections, and updating the database.
-License
+
+# License
 This project is licensed under the MIT License.
