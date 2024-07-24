@@ -1,4 +1,4 @@
-ETL Swarm
+# ETL Swarm
 ETL Swarm is a Python-based implementation designed to extract, transform, and load (ETL) data using a swarm of algorithms in conjunction with a language model (LLM) to automate data correction processes. This implementation demonstrates how to use OpenAI's GPT-4o-mini model to identify and correct issues within a dataset, and then update a SQLite database with the corrected data.
 
 Table of Contents
